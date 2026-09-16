@@ -57,10 +57,15 @@ Plain history (one command per line) and zsh's extended format
 always point into the command itself, skipping the timestamp prefix when
 present.
 
+zsh also splits a command that was typed across several physical lines
+into that many history lines, with every line but the last ending in a
+trailing `\`. histlint joins those back into a single logical command
+before running any rule against it, and still reports findings against
+whichever physical line and column they actually landed on, so the
+snippet in the report matches what's on disk.
+
 ## Limitations (for now)
 
-- Each history line is linted independently; a command continued across
-  lines with a trailing `\` is not reassembled.
 - Pipe and token splitting is whitespace/`|`-based and doesn't understand
   quoting, so a `|` or space inside a quoted string can throw off column
   math for that line.

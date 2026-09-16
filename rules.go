@@ -113,11 +113,12 @@ func checkDangerousRemove(e Entry) []Finding {
 			if !dangerousRemoveTargets[a.text] {
 				continue
 			}
+			line, col, source := e.resolve(a.start)
 			findings = append(findings, Finding{
-				Line:    e.LineNo,
-				Col:     e.CmdOffset + a.start + 1,
+				Line:    line,
+				Col:     col,
 				Length:  len(a.text),
-				Source:  e.Raw,
+				Source:  source,
 				Message: "recursive forced delete of " + a.text + " would wipe far more than one directory",
 				Help:    "scope the path before rerunning this, e.g. `rm -rf -- ./specific/dir`, or drop -f and confirm each removal",
 			})
@@ -181,12 +182,12 @@ func checkPipeToShell(e Entry) []Finding {
 			continue
 		}
 		if sawFetch && shellInterpreters[name] {
-			col := e.CmdOffset + seg.offset + cmdTok.start + 1
+			line, col, source := e.resolve(seg.offset + cmdTok.start)
 			findings = append(findings, Finding{
-				Line:    e.LineNo,
+				Line:    line,
 				Col:     col,
 				Length:  len(cmdTok.text),
-				Source:  e.Raw,
+				Source:  source,
 				Message: "output of curl/wget is piped straight into " + name + " without ever being inspected",
 				Help:    "download to a file and read it first: the remote script can differ from what you reviewed by the time it runs again",
 			})
@@ -237,11 +238,12 @@ func checkPlaintextSecret(e Entry) []Finding {
 		return nil
 	}
 
+	line, col, source := e.resolve(loc[4])
 	return []Finding{{
-		Line:    e.LineNo,
-		Col:     e.CmdOffset + loc[4] + 1,
+		Line:    line,
+		Col:     col,
 		Length:  loc[5] - loc[4],
-		Source:  e.Raw,
+		Source:  source,
 		Message: "value assigned to " + name + " looks like a live credential sitting in plaintext history",
 		Help:    "history files are rarely encrypted and often synced or backed up; rotate this credential and load secrets from a gitignored env file instead",
 	}}
