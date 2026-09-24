@@ -66,9 +66,10 @@ snippet in the report matches what's on disk.
 
 ## Limitations (for now)
 
-- Pipe and token splitting is whitespace/`|`-based and doesn't understand
-  quoting, so a `|` or space inside a quoted string can throw off column
-  math for that line.
+- Pipe and token splitting understand single/double quotes and backslash
+  escapes, so a `|` or space inside a quoted string doesn't get mistaken for
+  a real delimiter, but nesting like command substitution (`$(...)`) isn't
+  parsed — a `|` inside one will still split the command.
 - No config file yet — all three rules always run.
 
 ## License
