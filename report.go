@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -36,4 +37,43 @@ func printFinding(w io.Writer, f Finding) {
 		fmt.Fprintf(w, "%s = help: %s\n", gutter, f.Help)
 	}
 	fmt.Fprintln(w)
+}
+
+// jsonFinding is the wire shape for --json output. It mirrors Finding but
+// spells the severity out as a string ("error"/"warning") since that's
+// what a consumer parsing the output actually wants, not the underlying
+// iota value.
+type jsonFinding struct {
+	File     string `json:"file"`
+	Line     int    `json:"line"`
+	Col      int    `json:"col"`
+	Length   int    `json:"length"`
+	Rule     string `json:"rule"`
+	Severity string `json:"severity"`
+	Message  string `json:"message"`
+	Help     string `json:"help,omitempty"`
+	Source   string `json:"source"`
+}
+
+// printFindingsJSON writes every finding as a single JSON array, so a
+// script consuming histlint output doesn't have to deal with one object
+// per line or worry about the file being empty part way through.
+func printFindingsJSON(w io.Writer, findings []Finding) error {
+	out := make([]jsonFinding, len(findings))
+	for i, f := range findings {
+		out[i] = jsonFinding{
+			File:     f.File,
+			Line:     f.Line,
+			Col:      f.Col,
+			Length:   f.Length,
+			Rule:     f.Rule,
+			Severity: f.Severity.String(),
+			Message:  f.Message,
+			Help:     f.Help,
+			Source:   f.Source,
+		}
+	}
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(out)
 }

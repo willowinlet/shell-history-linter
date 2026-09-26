@@ -39,6 +39,26 @@ Example output:
     = help: download to a file and read it first: the remote script can differ from what you reviewed by the time it runs again
 ```
 
+Pass `--json` to get a single JSON array of findings on stdout instead,
+useful for feeding into another tool:
+
+```
+$ ./histlint --json ~/.zsh_history
+[
+  {
+    "file": "/Users/you/.zsh_history",
+    "line": 118,
+    "col": 8,
+    "length": 1,
+    "rule": "dangerous-rm",
+    "severity": "error",
+    "message": "recursive forced delete of / would wipe far more than one directory",
+    "help": "scope the path before rerunning this, e.g. `rm -rf -- ./specific/dir`, or drop -f and confirm each removal",
+    "source": "sudo rm -rf /"
+  }
+]
+```
+
 Exit codes: `0` if no findings, `1` if findings were reported, `2` if a
 file couldn't be read.
 

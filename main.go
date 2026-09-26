@@ -4,19 +4,27 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 )
 
 func main() {
-	args := os.Args[1:]
+	jsonOutput := flag.Bool("json", false, "emit findings as a JSON array instead of compiler-style text")
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "usage: histlint [--json] <history-file> [more-files...]")
+	}
+	flag.Parse()
+
+	args := flag.Args()
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: histlint <history-file> [more-files...]")
+		flag.Usage()
 		os.Exit(2)
 	}
 
 	hadFindings := false
 	hadError := false
+	allFindings := []Finding{}
 
 	for _, path := range args {
 		entries, err := ParseFile(path)
@@ -27,11 +35,22 @@ func main() {
 		}
 
 		findings := LintEntries(entries, path)
+		if len(findings) > 0 {
+			hadFindings = true
+		}
+		if *jsonOutput {
+			allFindings = append(allFindings, findings...)
+			continue
+		}
 		for _, f := range findings {
 			printFinding(os.Stdout, f)
 		}
-		if len(findings) > 0 {
-			hadFindings = true
+	}
+
+	if *jsonOutput {
+		if err := printFindingsJSON(os.Stdout, allFindings); err != nil {
+			fmt.Fprintf(os.Stderr, "histlint: %v\n", err)
+			os.Exit(2)
 		}
 	}
 
